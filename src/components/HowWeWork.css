@@ -1,0 +1,143 @@
+.how-we-work {
+  background: white;
+  padding: 100px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.how-we-work .section-title {
+  text-align: center;
+  color: var(--primary-color);
+  font-size: 2.8rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.section-subtitle {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 1.1rem;
+  margin-bottom: 3.5rem;
+  max-width: 650px;
+  margin-left: auto;
+  margin-right: auto;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  align-items: stretch;
+}
+
+.workflow-item {
+  position: relative;
+  padding: 2.5rem 2rem;
+  background: var(--bg-light);
+  border-radius: 12px;
+  text-align: center;
+  border: 2px solid var(--border-color);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.workflow-item:hover {
+  border-color: var(--accent-blue);
+  box-shadow: 0 8px 24px rgba(0, 102, 204, 0.12);
+}
+
+.workflow-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--accent-blue), #0088ff);
+  color: white;
+  border-radius: 50%;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 102, 204, 0.25);
+}
+
+.workflow-item h3 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.workflow-item p {
+  color: var(--text-light);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.workflow-arrow {
+  display: none;
+  position: absolute;
+  right: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--secondary-color);
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+@media (min-width: 769px) and (max-width: 1000px) {
+  .workflow-arrow {
+    display: block;
+  }
+
+  .workflow-item:last-child .workflow-arrow {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .how-we-work {
+    padding: 60px 0;
+  }
+
+  .how-we-work .section-title {
+    font-size: 2rem;
+  }
+
+  .section-subtitle {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  .workflow-grid {
+    gap: 1rem;
+  }
+
+  /* Smaller boxes on mobile */
+  .workflow-item {
+    padding: 1.5rem 1rem;
+    border-radius: 8px;
+  }
+
+  .workflow-number {
+    width: 45px;
+    height: 45px;
+    font-size: 1.3rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .workflow-item h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .workflow-item p {
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+}
