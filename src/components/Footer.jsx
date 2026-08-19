@@ -13,7 +13,7 @@ function Footer() {
           <div className="footer-section">
             <h4>Contact</h4>
             <p>
-              <a href="mailto:info@wayrightsolutions.com?subject=Wayright Solutions Inquiry">info@wayrightsolutions.com</a>
+              <a href="mailto:info@wayrightsolutions.com?subject=Wayright Solutions Inquiry">Email</a>
             </p>
           </div>
           <div className="footer-section">
