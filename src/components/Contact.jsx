@@ -57,6 +57,7 @@ function Contact() {
           },
           (error) => {
             console.error('Failed to send email:', error)
+
             setError('Failed to send message. Please try again.')
 
             setTimeout(() => {
@@ -73,15 +74,11 @@ function Contact() {
         <h2 className="section-title">Get In Touch</h2>
 
         <div className="contact-content">
-          <div className="contact-info">
-            <h3>Contact Information</h3>
 
-            <p className="contact-email">
-              <strong>Email:</strong>{' '}
-              <a href="mailto:info@wayrightsolutions.com?subject=Wayright Solutions Inquiry">
-                info@wayrightsolutions.com
-              </a>
-            </p>
+          <div className="contact-info">
+            <h3>
+              <a href="/contact">Contact Us</a>
+            </h3>
 
             <p className="contact-description">
               Have questions about our services? Interested in a consultation?
@@ -121,12 +118,14 @@ function Contact() {
                 onChange={handleChange}
                 required
               />
+
             </div>
 
             <button type="submit" className="submit-button">
               Send Message
             </button>
           </form>
+
         </div>
 
         {submitted && (
@@ -140,6 +139,7 @@ function Contact() {
             ✗ {error}
           </div>
         )}
+
       </div>
     </section>
   )
