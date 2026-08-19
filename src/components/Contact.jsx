@@ -49,20 +49,19 @@ function Contact() {
 
   return (
     <section id="contact" className="contact">
-      <div className="container">
-        <h2 className="section-title">Get In Touch</h2>
-        <div className="contact-content">
-          <div className="contact-info">
-            <h3>Contact Information</h3>
-            <p className="contact-email">
-              <strong>Email:</strong> 
-              <a href="mailto:info@wayrightsolutions.com?subject=Wayright Solutions Inquiry">info@wayrightsolutions.com</a>
-            </p>
-            <p className="contact-description">
-              Have questions about our services? Interested in a consultation? 
-              Reach out to us directly or use the form below.
-            </p>
-          </div>
+
+      <div className="contact-info">
+  <h3>
+    <a href="/contact">Contact Us</a>
+  </h3>
+
+  <p className="contact-description">
+    Have questions about our services? Interested in a consultation?
+    Reach out to us directly or use the form below.
+  </p>
+</div>
+
+    
 
           <form className="contact-form" onSubmit={handleSubmit}>
             <div className="form-group">
