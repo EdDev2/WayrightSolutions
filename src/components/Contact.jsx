@@ -76,9 +76,12 @@ function Contact() {
         <div className="contact-content">
 
           <div className="contact-info">
-            <h3>
-              <a href="/contact">Contact Us</a>
-            </h3>
+          <h3>
+  <a href="mailto:info@wayrightsolutions.com?subject=Wayright Solutions Inquiry">
+    Contact Us
+  </a>
+</h3>
+
 
             <p className="contact-description">
               Have questions about our services? Interested in a consultation?
