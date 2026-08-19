@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import emailjs from '@emailjs/browser'
 import './Contact.css'
 
+// Initialize EmailJS
 emailjs.init('swsYA9TCmDgYNI3M2')
 
 function Contact() {
@@ -13,32 +14,19 @@ function Contact() {
 
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
-  const [sending, setSending] = useState(false)
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
 
-    setSubmitted(false)
-    setError('')
-
-    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
-      setError('Please fill in all fields.')
-      return
-    }
-
-    setSending(true)
-
-    try {
-      await emailjs.send(
+    if (formData.name && formData.email && formData.message) {
+      emailjs.send(
         'service_m1mub2e',
         'template_y4ug9ty',
         {
@@ -48,32 +36,35 @@ function Contact() {
           to_email: 'info@wayrightsolutions.com'
         }
       )
+        .then((response) => {
+          console.log('Email sent successfully:', response)
 
-      setSubmitted(true)
+          setSubmitted(true)
+          setFormData({
+            name: '',
+            email: '',
+            message: ''
+          })
+          setError('')
 
-      setFormData({
-        name: '',
-        email: '',
-        message: ''
-      })
+          setTimeout(() => {
+            setSubmitted(false)
+          }, 3000)
+        })
+        .catch((error) => {
+          console.error('Failed to send email:', error)
+          setError('Failed to send message. Please try again.')
 
-      setTimeout(() => {
-        setSubmitted(false)
-      }, 3000)
-    } catch (err) {
-      console.error('Failed to send email:', err)
-      setError('Failed to send message. Please try again.')
-
-      setTimeout(() => {
-        setError('')
-      }, 3000)
-    } finally {
-      setSending(false)
+          setTimeout(() => {
+            setError('')
+          }, 3000)
+        })
     }
   }
 
   return (
     <section id="contact" className="contact">
+
       <div className="contact-info">
         <h3>
           <a href="/contact">Contact Us</a>
@@ -86,6 +77,7 @@ function Contact() {
       </div>
 
       <form className="contact-form" onSubmit={handleSubmit}>
+
         <div className="form-group">
           <input
             type="text"
@@ -119,13 +111,10 @@ function Contact() {
           />
         </div>
 
-        <button
-          type="submit"
-          className="submit-button"
-          disabled={sending}
-        >
-          {sending ? 'Sending...' : 'Send Message'}
+        <button type="submit" className="submit-button">
+          Send Message
         </button>
+
       </form>
 
       {submitted && (
@@ -139,6 +128,7 @@ function Contact() {
           ✗ {error}
         </div>
       )}
+
     </section>
   )
 }
