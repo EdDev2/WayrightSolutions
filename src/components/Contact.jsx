@@ -1,14 +1,19 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import emailjs from '@emailjs/browser'
 import './Contact.css'
 
-// Initialize EmailJS (REPLACE WITH YOUR PUBLIC KEY)
+// Initialize EmailJS
 if (!emailjs.publicKey) {
   emailjs.init('swsYA9TCmDgYNI3M2')
 }
 
 function Contact() {
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' })
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  })
+
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
 
@@ -21,47 +26,68 @@ function Contact() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+
     if (formData.name && formData.email && formData.message) {
-      emailjs.send(
-        'service_m1mub2e',
-        'template_y4ug9ty',
-        {
-          from_name: formData.name,
-          from_email: formData.email,
-          message: formData.message,
-          to_email: 'info@wayrightsolutions.com'
-        }
-      ).then(
-        (response) => {
-          setSubmitted(true)
-          setFormData({ name: '', email: '', message: '' })
-          setError('')
-          setTimeout(() => setSubmitted(false), 3000)
-        },
-        (error) => {
-          console.error('Failed to send email:', error)
-          setError('Failed to send message. Please try again.')
-          setTimeout(() => setError(''), 3000)
-        }
-      )
+      emailjs
+        .send(
+          'service_m1mub2e',
+          'template_y4ug9ty',
+          {
+            from_name: formData.name,
+            from_email: formData.email,
+            message: formData.message,
+            to_email: 'info@wayrightsolutions.com'
+          }
+        )
+        .then(
+          () => {
+            setSubmitted(true)
+
+            setFormData({
+              name: '',
+              email: '',
+              message: ''
+            })
+
+            setError('')
+
+            setTimeout(() => {
+              setSubmitted(false)
+            }, 3000)
+          },
+          (error) => {
+            console.error('Failed to send email:', error)
+            setError('Failed to send message. Please try again.')
+
+            setTimeout(() => {
+              setError('')
+            }, 3000)
+          }
+        )
     }
   }
 
   return (
     <section id="contact" className="contact">
+      <div className="container">
+        <h2 className="section-title">Get In Touch</h2>
 
-      <div className="contact-info">
-  <h3>
-    <a href="/contact">Contact Us</a>
-  </h3>
+        <div className="contact-content">
+          <div className="contact-info">
+            <h3>Contact Information</h3>
 
-  <p className="contact-description">
-    Have questions about our services? Interested in a consultation?
-    Reach out to us directly or use the form below.
-  </p>
-</div>
+            <p className="contact-email">
+              <strong>Email:</strong>{' '}
+              <a href="mailto:info@wayrightsolutions.com?subject=Wayright Solutions Inquiry">
+                info@wayrightsolutions.com
+              </a>
+            </p>
 
-    
+            <p className="contact-description">
+              Have questions about our services? Interested in a consultation?
+              Reach out to us directly or use the form below.
+            </p>
+          </div>
 
           <form className="contact-form" onSubmit={handleSubmit}>
             <div className="form-group">
@@ -74,6 +100,7 @@ function Contact() {
                 required
               />
             </div>
+
             <div className="form-group">
               <input
                 type="email"
@@ -84,6 +111,7 @@ function Contact() {
                 required
               />
             </div>
+
             <div className="form-group">
               <textarea
                 name="message"
@@ -92,16 +120,21 @@ function Contact() {
                 value={formData.message}
                 onChange={handleChange}
                 required
-              ></textarea>
+              />
             </div>
-            <button type="submit" className="submit-button">Send Message</button>
+
+            <button type="submit" className="submit-button">
+              Send Message
+            </button>
           </form>
         </div>
+
         {submitted && (
           <div className="success-message">
             ✓ Message sent successfully! We'll get back to you soon.
           </div>
         )}
+
         {error && (
           <div className="error-message">
             ✗ {error}
@@ -113,5 +146,3 @@ function Contact() {
 }
 
 export default Contact
-
-can you fix the syntax
