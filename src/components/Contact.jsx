@@ -3,7 +3,9 @@ import emailjs from '@emailjs/browser'
 import './Contact.css'
 
 // Initialize EmailJS
-emailjs.init('swsYA9TCmDgYNI3M2')
+if (!emailjs.publicKey) {
+  emailjs.init('swsYA9TCmDgYNI3M2')
+}
 
 function Contact() {
   const [formData, setFormData] = useState({
@@ -26,45 +28,45 @@ function Contact() {
     e.preventDefault()
 
     if (formData.name && formData.email && formData.message) {
-      emailjs.send(
-        'service_m1mub2e',
-        'template_y4ug9ty',
-        {
-          from_name: formData.name,
-          from_email: formData.email,
-          message: formData.message,
-          to_email: 'info@wayrightsolutions.com'
-        }
-      )
-        .then((response) => {
-          console.log('Email sent successfully:', response)
-
-          setSubmitted(true)
-          setFormData({
-            name: '',
-            email: '',
-            message: ''
-          })
-          setError('')
-
-          setTimeout(() => {
-            setSubmitted(false)
-          }, 3000)
-        })
-        .catch((error) => {
-          console.error('Failed to send email:', error)
-          setError('Failed to send message. Please try again.')
-
-          setTimeout(() => {
+      emailjs
+        .send(
+          'service_m1mub2e',
+          'template_y4ug9ty',
+          {
+            from_name: formData.name,
+            from_email: formData.email,
+            message: formData.message,
+            to_email: 'info@wayrightsolutions.com'
+          }
+        )
+        .then(
+          () => {
+            setSubmitted(true)
+            setFormData({
+              name: '',
+              email: '',
+              message: ''
+            })
             setError('')
-          }, 3000)
-        })
+
+            setTimeout(() => {
+              setSubmitted(false)
+            }, 3000)
+          },
+          (error) => {
+            console.error('Failed to send email:', error)
+            setError('Failed to send message. Please try again.')
+
+            setTimeout(() => {
+              setError('')
+            }, 3000)
+          }
+        )
     }
   }
 
   return (
     <section id="contact" className="contact">
-
       <div className="contact-info">
         <h3>
           <a href="/contact">Contact Us</a>
@@ -77,7 +79,6 @@ function Contact() {
       </div>
 
       <form className="contact-form" onSubmit={handleSubmit}>
-
         <div className="form-group">
           <input
             type="text"
@@ -114,7 +115,6 @@ function Contact() {
         <button type="submit" className="submit-button">
           Send Message
         </button>
-
       </form>
 
       {submitted && (
@@ -128,7 +128,6 @@ function Contact() {
           ✗ {error}
         </div>
       )}
-
     </section>
   )
 }
