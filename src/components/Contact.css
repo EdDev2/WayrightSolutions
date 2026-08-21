@@ -143,3 +143,20 @@
     padding: 2rem 1.5rem;
   }
 }
+
+.privacy-form-notice {
+  margin-top: 14px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #777;
+  text-align: center;
+}
+
+.privacy-form-notice a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.privacy-form-notice a:hover {
+  opacity: 0.75;
+}
