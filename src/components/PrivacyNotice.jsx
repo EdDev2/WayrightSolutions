@@ -1,5 +1,5 @@
 import React from 'react'
-import '../privacy.css'
+//import '../privacy.css'
 
 function PrivacyNotice() {
   return (
