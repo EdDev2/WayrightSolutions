@@ -31,12 +31,6 @@ function Footer() {
               </a>
             </p>
 
-            <p>
-              <a href="/privacy.html">
-                Privacy Notice
-              </a>
-            </p>
-
           </div>
 
           <div className="footer-section">
@@ -60,7 +54,13 @@ function Footer() {
         <div className="footer-bottom">
 
           <p>
-            &copy; {new Date().getFullYear()} Wayright Solutions Ltd. All rights reserved.
+            © 2026 Wayright Solutions Ltd. All rights reserved.
+          </p>
+
+          <p className="footer-privacy-link">
+            <a href="/privacy.html">
+              Privacy Notice
+            </a>
           </p>
 
         </div>

@@ -7,7 +7,6 @@ import HowWeWork from './components/HowWeWork'
 import Testimonial from './components/Testimonial'
 import WaitingList from './components/WaitingList'
 import Contact from './components/Contact'
-import PrivacyNotice from './components/PrivacyNotice'
 import Footer from './components/Footer'
 
 import './App.css'
@@ -23,7 +22,6 @@ function App() {
       <Testimonial />
       <WaitingList />
       <Contact />
-      <PrivacyNotice />
       <Footer />
     </div>
   )
