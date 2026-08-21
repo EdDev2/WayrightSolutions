@@ -5,7 +5,10 @@ import './WaitingList.css'
 
 const RECAPTCHA_SITE_KEY = '6LdygJEtAAAAADRlkSqX9RG_zSBjGlQXDr7AGDL8'
 
-// Initialize EmailJS
+// ============================================================
+// EMAILJS
+// ============================================================
+
 if (!emailjs.publicKey) {
   emailjs.init('swsYA9TCmDgYNI3M2')
 }
@@ -21,95 +24,168 @@ function WaitingList() {
   const [captchaReady, setCaptchaReady] = useState(false)
   const [sending, setSending] = useState(false)
 
+  // reCAPTCHA container
   const captchaRef = useRef(null)
+
+  // Google widget ID
   const captchaWidgetId = useRef(null)
 
+  // Keeps latest form data available to callback
+  const formDataRef = useRef(formData)
+
+  // Keep ref synchronized
+  useEffect(() => {
+    formDataRef.current = formData
+  }, [formData])
+
   // ============================================================
-  // LOAD / RENDER INVISIBLE RECAPTCHA
+  // RENDER reCAPTCHA AFTER GOOGLE LOADS
   // ============================================================
 
   useEffect(() => {
-    let interval
+    let mounted = true
 
     const renderCaptcha = () => {
+      if (!mounted) return
+
       if (
-        window.grecaptcha &&
-        captchaRef.current &&
-        captchaWidgetId.current === null
+        !window.grecaptcha ||
+        !captchaRef.current ||
+        captchaWidgetId.current !== null
       ) {
-        try {
-          captchaWidgetId.current = window.grecaptcha.render(
+        return
+      }
+
+      try {
+        captchaWidgetId.current =
+          window.grecaptcha.render(
             captchaRef.current,
             {
               sitekey: RECAPTCHA_SITE_KEY,
+
               size: 'invisible',
+
               callback: handleCaptchaSuccess,
-              'expired-callback': handleCaptchaExpired,
-              'error-callback': handleCaptchaError
+
+              'expired-callback':
+                handleCaptchaExpired,
+
+              'error-callback':
+                handleCaptchaError
             }
           )
 
-          setCaptchaReady(true)
+        setCaptchaReady(true)
 
-          if (interval) {
-            clearInterval(interval)
-          }
-        } catch (error) {
-          console.error('Failed to render reCAPTCHA:', error)
-        }
+        console.log(
+          'Waiting-list reCAPTCHA loaded successfully.'
+        )
+      } catch (err) {
+        console.error(
+          'Failed to render waiting-list reCAPTCHA:',
+          err
+        )
+
+        setError(
+          'Security verification could not be loaded. Please refresh the page.'
+        )
       }
     }
 
-    renderCaptcha()
-
-    interval = setInterval(renderCaptcha, 100)
+    // Google already loaded
+    if (
+      window.recaptchaLoaded &&
+      window.grecaptcha
+    ) {
+      renderCaptcha()
+    } else {
+      // Wait for Google
+      window.addEventListener(
+        'recaptcha-loaded',
+        renderCaptcha
+      )
+    }
 
     return () => {
-      if (interval) {
-        clearInterval(interval)
-      }
+      mounted = false
+
+      window.removeEventListener(
+        'recaptcha-loaded',
+        renderCaptcha
+      )
     }
   }, [])
 
   // ============================================================
-  // RECAPTCHA SUCCESS
+  // CAPTCHA SUCCESS
   // ============================================================
 
   const handleCaptchaSuccess = (token) => {
+    console.log(
+      'Waiting-list reCAPTCHA verification successful.'
+    )
+
+    if (!token) {
+      setSending(false)
+
+      setError(
+        'Security verification failed. Please try again.'
+      )
+
+      return
+    }
+
     sendEmail(token)
   }
 
   // ============================================================
-  // RECAPTCHA EXPIRED
+  // CAPTCHA EXPIRED
   // ============================================================
 
   const handleCaptchaExpired = () => {
-    setSending(false)
-    setError('Security verification expired. Please try again.')
+    console.log(
+      'Waiting-list reCAPTCHA token expired.'
+    )
 
-    if (
-      window.grecaptcha &&
-      captchaWidgetId.current !== null
-    ) {
-      window.grecaptcha.reset(captchaWidgetId.current)
-    }
+    setSending(false)
+
+    setError(
+      'Security verification expired. Please try again.'
+    )
+
+    resetCaptcha()
   }
 
   // ============================================================
-  // RECAPTCHA ERROR
+  // CAPTCHA ERROR
   // ============================================================
 
   const handleCaptchaError = () => {
+    console.error(
+      'Waiting-list reCAPTCHA encountered an error.'
+    )
+
     setSending(false)
+
     setError(
       'Security verification failed. Please check your connection and try again.'
     )
 
+    resetCaptcha()
+  }
+
+  // ============================================================
+  // RESET CAPTCHA
+  // ============================================================
+
+  const resetCaptcha = () => {
     if (
       window.grecaptcha &&
       captchaWidgetId.current !== null
     ) {
-      window.grecaptcha.reset(captchaWidgetId.current)
+      window.grecaptcha.reset(
+        captchaWidgetId.current
+      )
     }
   }
 
@@ -118,28 +194,41 @@ function WaitingList() {
   // ============================================================
 
   const handleChange = (e) => {
-    setFormData({
+    const updatedData = {
       ...formData,
       [e.target.name]: e.target.value
-    })
+    }
+
+    setFormData(updatedData)
+
+    formDataRef.current = updatedData
 
     setError('')
   }
 
   // ============================================================
-  // FORM SUBMISSION
+  // FORM SUBMIT
   // ============================================================
 
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    if (!formData.name || !formData.email) {
-      setError('Please complete all fields.')
+    if (
+      !formData.name ||
+      !formData.email
+    ) {
+      setError(
+        'Please complete all fields.'
+      )
+
       return
     }
 
     if (!captchaReady) {
-      setError('Security verification is still loading. Please try again.')
+      setError(
+        'Security verification is still loading. Please try again.'
+      )
+
       return
     }
 
@@ -147,18 +236,25 @@ function WaitingList() {
       !window.grecaptcha ||
       captchaWidgetId.current === null
     ) {
-      setError('Security verification is unavailable. Please try again.')
+      setError(
+        'Security verification is unavailable. Please refresh the page and try again.'
+      )
+
       return
     }
 
     setSending(true)
+
     setError('')
 
-    // Execute Invisible reCAPTCHA.
-    //
-    // Once Google completes the check, handleCaptchaSuccess()
-    // receives the token and sends the EmailJS request.
-    window.grecaptcha.execute(captchaWidgetId.current)
+    console.log(
+      'Starting waiting-list Invisible reCAPTCHA...'
+    )
+
+    // Execute Invisible v2
+    window.grecaptcha.execute(
+      captchaWidgetId.current
+    )
   }
 
   // ============================================================
@@ -166,28 +262,36 @@ function WaitingList() {
   // ============================================================
 
   const sendEmail = (captchaToken) => {
-    if (!captchaToken) {
-      setSending(false)
-      setError('Security verification failed. Please try again.')
-      return
-    }
+    const currentFormData =
+      formDataRef.current
+
+    console.log(
+      'Sending waiting-list registration through EmailJS...'
+    )
 
     emailjs
       .send(
         'service_m1mub2e',
         'template_ju5ba8e',
         {
-          from_name: formData.name,
-          from_email: formData.email,
+          from_name: currentFormData.name,
+
+          from_email: currentFormData.email,
+
           to_email: 'info@wayrightsolutions.com',
 
-          // EmailJS uses this token to verify the reCAPTCHA.
+          // EmailJS expects the reCAPTCHA token here
           'g-recaptcha-response': captchaToken
         }
       )
       .then(
         () => {
+          console.log(
+            'Waiting-list registration sent successfully.'
+          )
+
           setSubmitted(true)
+
           setSending(false)
 
           setFormData({
@@ -195,39 +299,43 @@ function WaitingList() {
             email: ''
           })
 
+          formDataRef.current = {
+            name: '',
+            email: ''
+          }
+
           setError('')
 
-          // Reset reCAPTCHA so it can be used again.
-          if (
-            window.grecaptcha &&
-            captchaWidgetId.current !== null
-          ) {
-            window.grecaptcha.reset(captchaWidgetId.current)
-          }
+          resetCaptcha()
 
           setTimeout(() => {
             setSubmitted(false)
           }, 3000)
         },
-        (error) => {
-          console.error('Failed to send email:', error)
+        (err) => {
+          console.error(
+            'Failed to send waiting-list registration:',
+            err
+          )
 
           setSending(false)
-          setError('Failed to register. Please try again.')
 
-          if (
-            window.grecaptcha &&
-            captchaWidgetId.current !== null
-          ) {
-            window.grecaptcha.reset(captchaWidgetId.current)
-          }
+          setError(
+            'Failed to register. Please try again.'
+          )
+
+          resetCaptcha()
 
           setTimeout(() => {
             setError('')
-          }, 3000)
+          }, 5000)
         }
       )
   }
+
+  // ============================================================
+  // UI
+  // ============================================================
 
   return (
     <section className="waiting-list">
@@ -239,7 +347,9 @@ function WaitingList() {
         </h2>
 
         <p className="waiting-subtitle">
-          Be among the first to learn about Wayright Solutions and get early access to our platform.
+          Be among the first to learn about
+          Wayright Solutions and get early
+          access to our platform.
         </p>
 
         <form
@@ -248,6 +358,7 @@ function WaitingList() {
         >
 
           <div className="form-group">
+
             <input
               type="text"
               name="name"
@@ -256,9 +367,11 @@ function WaitingList() {
               onChange={handleChange}
               required
             />
+
           </div>
 
           <div className="form-group">
+
             <input
               type="email"
               name="email"
@@ -267,9 +380,10 @@ function WaitingList() {
               onChange={handleChange}
               required
             />
+
           </div>
 
-          {/* Invisible reCAPTCHA widget */}
+          {/* Invisible reCAPTCHA renders here */}
           <div ref={captchaRef}></div>
 
           <button
@@ -277,14 +391,17 @@ function WaitingList() {
             className="submit-button"
             disabled={sending}
           >
-            {sending ? 'Verifying...' : 'Join Waiting List'}
+            {sending
+              ? 'Verifying...'
+              : 'Join Waiting List'}
           </button>
 
         </form>
 
         {submitted && (
           <div className="success-message">
-            ✓ Thanks for registering! We'll be in touch soon.
+            ✓ Thanks for registering!
+            We'll be in touch soon.
           </div>
         )}
 

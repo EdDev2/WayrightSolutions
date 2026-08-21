@@ -6,7 +6,10 @@ import './Contact.css'
 
 const RECAPTCHA_SITE_KEY = '6LdygJEtAAAAADRlkSqX9RG_zSBjGlQXDr7AGDL8'
 
-// Initialize EmailJS
+// ============================================================
+// EMAILJS
+// ============================================================
+
 if (!emailjs.publicKey) {
   emailjs.init('swsYA9TCmDgYNI3M2')
 }
@@ -23,95 +26,161 @@ function Contact() {
   const [captchaReady, setCaptchaReady] = useState(false)
   const [sending, setSending] = useState(false)
 
+  // Reference to the HTML element where reCAPTCHA will render
   const captchaRef = useRef(null)
+
+  // Stores the Google reCAPTCHA widget ID
   const captchaWidgetId = useRef(null)
 
+  // Keeps the latest form data available to the CAPTCHA callback
+  const formDataRef = useRef(formData)
+
+  // Keep ref synchronized with React state
+  useEffect(() => {
+    formDataRef.current = formData
+  }, [formData])
+
   // ============================================================
-  // LOAD / RENDER INVISIBLE RECAPTCHA
+  // RENDER reCAPTCHA AFTER GOOGLE HAS LOADED
   // ============================================================
 
   useEffect(() => {
-    let interval
+    let mounted = true
 
     const renderCaptcha = () => {
+      if (!mounted) return
+
       if (
-        window.grecaptcha &&
-        captchaRef.current &&
-        captchaWidgetId.current === null
+        !window.grecaptcha ||
+        !captchaRef.current ||
+        captchaWidgetId.current !== null
       ) {
-        try {
-          captchaWidgetId.current = window.grecaptcha.render(
-            captchaRef.current,
-            {
-              sitekey: RECAPTCHA_SITE_KEY,
-              size: 'invisible',
-              callback: handleCaptchaSuccess,
-              'expired-callback': handleCaptchaExpired,
-              'error-callback': handleCaptchaError
-            }
-          )
+        return
+      }
 
-          setCaptchaReady(true)
+      try {
+        captchaWidgetId.current = window.grecaptcha.render(
+          captchaRef.current,
+          {
+            sitekey: RECAPTCHA_SITE_KEY,
 
-          if (interval) {
-            clearInterval(interval)
+            size: 'invisible',
+
+            callback: handleCaptchaSuccess,
+
+            'expired-callback': handleCaptchaExpired,
+
+            'error-callback': handleCaptchaError
           }
-        } catch (error) {
-          console.error('Failed to render reCAPTCHA:', error)
-        }
+        )
+
+        setCaptchaReady(true)
+
+        console.log(
+          'Invisible reCAPTCHA loaded successfully.'
+        )
+      } catch (err) {
+        console.error(
+          'Failed to render reCAPTCHA:',
+          err
+        )
+
+        setError(
+          'Security verification could not be loaded. Please refresh the page.'
+        )
       }
     }
 
-    renderCaptcha()
-
-    interval = setInterval(renderCaptcha, 100)
+    // Google may already have loaded before React mounted
+    if (
+      window.recaptchaLoaded &&
+      window.grecaptcha
+    ) {
+      renderCaptcha()
+    } else {
+      // Otherwise wait for Google's load event
+      window.addEventListener(
+        'recaptcha-loaded',
+        renderCaptcha
+      )
+    }
 
     return () => {
-      if (interval) {
-        clearInterval(interval)
-      }
+      mounted = false
+
+      window.removeEventListener(
+        'recaptcha-loaded',
+        renderCaptcha
+      )
     }
   }, [])
 
   // ============================================================
-  // RECAPTCHA SUCCESS
+  // CAPTCHA SUCCESS
   // ============================================================
 
   const handleCaptchaSuccess = (token) => {
+    console.log('reCAPTCHA verification successful.')
+
+    if (!token) {
+      setSending(false)
+
+      setError(
+        'Security verification failed. Please try again.'
+      )
+
+      return
+    }
+
     sendEmail(token)
   }
 
   // ============================================================
-  // RECAPTCHA EXPIRED
+  // CAPTCHA EXPIRED
   // ============================================================
 
   const handleCaptchaExpired = () => {
-    setSending(false)
-    setError('Security verification expired. Please try again.')
+    console.log('reCAPTCHA token expired.')
 
-    if (
-      window.grecaptcha &&
-      captchaWidgetId.current !== null
-    ) {
-      window.grecaptcha.reset(captchaWidgetId.current)
-    }
+    setSending(false)
+
+    setError(
+      'Security verification expired. Please try again.'
+    )
+
+    resetCaptcha()
   }
 
   // ============================================================
-  // RECAPTCHA ERROR
+  // CAPTCHA ERROR
   // ============================================================
 
   const handleCaptchaError = () => {
+    console.error(
+      'reCAPTCHA encountered an error.'
+    )
+
     setSending(false)
+
     setError(
       'Security verification failed. Please check your connection and try again.'
     )
 
+    resetCaptcha()
+  }
+
+  // ============================================================
+  // RESET CAPTCHA
+  // ============================================================
+
+  const resetCaptcha = () => {
     if (
       window.grecaptcha &&
       captchaWidgetId.current !== null
     ) {
-      window.grecaptcha.reset(captchaWidgetId.current)
+      window.grecaptcha.reset(
+        captchaWidgetId.current
+      )
     }
   }
 
@@ -120,47 +189,71 @@ function Contact() {
   // ============================================================
 
   const handleChange = (e) => {
-    setFormData({
+    const updatedData = {
       ...formData,
       [e.target.name]: e.target.value
-    })
+    }
+
+    setFormData(updatedData)
+
+    formDataRef.current = updatedData
 
     setError('')
   }
 
   // ============================================================
-  // FORM SUBMISSION
+  // FORM SUBMIT
   // ============================================================
 
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    if (!formData.name || !formData.email || !formData.message) {
-      setError('Please complete all fields.')
+    // Validate form
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.message
+    ) {
+      setError(
+        'Please complete all fields.'
+      )
+
       return
     }
 
+    // Make sure CAPTCHA has loaded
     if (!captchaReady) {
-      setError('Security verification is still loading. Please try again.')
+      setError(
+        'Security verification is still loading. Please try again.'
+      )
+
       return
     }
 
+    // Make sure widget exists
     if (
       !window.grecaptcha ||
       captchaWidgetId.current === null
     ) {
-      setError('Security verification is unavailable. Please try again.')
+      setError(
+        'Security verification is unavailable. Please refresh the page and try again.'
+      )
+
       return
     }
 
     setSending(true)
+
     setError('')
 
-    // Execute Invisible reCAPTCHA.
-    //
-    // Once Google completes the check, handleCaptchaSuccess()
-    // receives the token and sends the EmailJS request.
-    window.grecaptcha.execute(captchaWidgetId.current)
+    console.log(
+      'Starting Invisible reCAPTCHA...'
+    )
+
+    // Execute Invisible v2
+    window.grecaptcha.execute(
+      captchaWidgetId.current
+    )
   }
 
   // ============================================================
@@ -168,29 +261,38 @@ function Contact() {
   // ============================================================
 
   const sendEmail = (captchaToken) => {
-    if (!captchaToken) {
-      setSending(false)
-      setError('Security verification failed. Please try again.')
-      return
-    }
+    const currentFormData =
+      formDataRef.current
+
+    console.log(
+      'Sending contact form through EmailJS...'
+    )
 
     emailjs
       .send(
         'service_m1mub2e',
         'template_y4ug9ty',
         {
-          from_name: formData.name,
-          from_email: formData.email,
-          message: formData.message,
+          from_name: currentFormData.name,
+
+          from_email: currentFormData.email,
+
+          message: currentFormData.message,
+
           to_email: 'info@wayrightsolutions.com',
 
-          // EmailJS uses this token to verify the reCAPTCHA.
+          // EmailJS expects the reCAPTCHA token here
           'g-recaptcha-response': captchaToken
         }
       )
       .then(
         () => {
+          console.log(
+            'Contact email sent successfully.'
+          )
+
           setSubmitted(true)
+
           setSending(false)
 
           setFormData({
@@ -199,42 +301,50 @@ function Contact() {
             message: ''
           })
 
+          formDataRef.current = {
+            name: '',
+            email: '',
+            message: ''
+          }
+
           setError('')
 
-          // Reset reCAPTCHA so it can be used again.
-          if (
-            window.grecaptcha &&
-            captchaWidgetId.current !== null
-          ) {
-            window.grecaptcha.reset(captchaWidgetId.current)
-          }
+          resetCaptcha()
 
           setTimeout(() => {
             setSubmitted(false)
           }, 3000)
         },
-        (error) => {
-          console.error('Failed to send email:', error)
+        (err) => {
+          console.error(
+            'Failed to send contact email:',
+            err
+          )
 
           setSending(false)
-          setError('Failed to send message. Please try again.')
 
-          if (
-            window.grecaptcha &&
-            captchaWidgetId.current !== null
-          ) {
-            window.grecaptcha.reset(captchaWidgetId.current)
-          }
+          setError(
+            'Failed to send message. Please try again.'
+          )
+
+          resetCaptcha()
 
           setTimeout(() => {
             setError('')
-          }, 3000)
+          }, 5000)
         }
       )
   }
 
+  // ============================================================
+  // UI
+  // ============================================================
+
   return (
-    <section id="contact" className="contact">
+    <section
+      id="contact"
+      className="contact"
+    >
       <div className="container">
 
         <h2 className="section-title">
@@ -244,16 +354,22 @@ function Contact() {
         <div className="contact-content">
 
           <div className="contact-info">
+
             <h3>
-              <a href="mailto:info@wayrightsolutions.com?subject=Wayright Solutions Inquiry">
+              <a
+                href="mailto:info@wayrightsolutions.com?subject=Wayright Solutions Inquiry"
+              >
                 Contact Us
               </a>
             </h3>
 
             <p className="contact-description">
-              Have questions about our services? Interested in a consultation?
-              Reach out to us directly or use the form below.
+              Have questions about our services?
+              Interested in a consultation?
+              Reach out to us directly or use the
+              form below.
             </p>
+
           </div>
 
           <form
@@ -262,6 +378,7 @@ function Contact() {
           >
 
             <div className="form-group">
+
               <input
                 type="text"
                 name="name"
@@ -270,9 +387,11 @@ function Contact() {
                 onChange={handleChange}
                 required
               />
+
             </div>
 
             <div className="form-group">
+
               <input
                 type="email"
                 name="email"
@@ -281,9 +400,11 @@ function Contact() {
                 onChange={handleChange}
                 required
               />
+
             </div>
 
             <div className="form-group">
+
               <textarea
                 name="message"
                 placeholder="Your Message"
@@ -292,9 +413,10 @@ function Contact() {
                 onChange={handleChange}
                 required
               />
+
             </div>
 
-            {/* Invisible reCAPTCHA widget */}
+            {/* Invisible reCAPTCHA renders here */}
             <div ref={captchaRef}></div>
 
             <button
@@ -302,15 +424,19 @@ function Contact() {
               className="submit-button"
               disabled={sending}
             >
-              {sending ? 'Verifying...' : 'Send Message'}
+              {sending
+                ? 'Verifying...'
+                : 'Send Message'}
             </button>
 
           </form>
+
         </div>
 
         {submitted && (
           <div className="success-message">
-            ✓ Message sent successfully! We'll get back to you soon.
+            ✓ Message sent successfully!
+            We'll get back to you soon.
           </div>
         )}
 

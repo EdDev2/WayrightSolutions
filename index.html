@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Wayright Solutions - Data Insights & Compliance</title>
+
     <link rel="icon" type="image/png" href="/wayright-logo-200h.jpg">
+
     <style>
         * {
             margin: 0;
@@ -12,9 +15,30 @@
             box-sizing: border-box;
         }
     </style>
+
+    <!-- reCAPTCHA v2 Invisible -->
+    <script>
+        window.recaptchaLoaded = false;
+
+        window.onRecaptchaLoad = function () {
+            window.recaptchaLoaded = true;
+
+            window.dispatchEvent(
+                new Event('recaptcha-loaded')
+            );
+        };
+    </script>
+
+    <script
+        src="https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit"
+        async
+        defer
+    ></script>
 </head>
+
 <body>
     <div id="root"></div>
+
     <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
