@@ -1,6 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import emailjs from '@emailjs/browser'
+
 import './Contact.css'
+
+
+const RECAPTCHA_SITE_KEY = '6LdygJEtAAAAADRlkSqX9RG_zSBjGlQXDr7AGDL8'
 
 // Initialize EmailJS
 if (!emailjs.publicKey) {
@@ -16,72 +20,235 @@ function Contact() {
 
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
+  const [captchaReady, setCaptchaReady] = useState(false)
+  const [sending, setSending] = useState(false)
+
+  const captchaRef = useRef(null)
+  const captchaWidgetId = useRef(null)
+
+  // ============================================================
+  // LOAD / RENDER INVISIBLE RECAPTCHA
+  // ============================================================
+
+  useEffect(() => {
+    let interval
+
+    const renderCaptcha = () => {
+      if (
+        window.grecaptcha &&
+        captchaRef.current &&
+        captchaWidgetId.current === null
+      ) {
+        try {
+          captchaWidgetId.current = window.grecaptcha.render(
+            captchaRef.current,
+            {
+              sitekey: RECAPTCHA_SITE_KEY,
+              size: 'invisible',
+              callback: handleCaptchaSuccess,
+              'expired-callback': handleCaptchaExpired,
+              'error-callback': handleCaptchaError
+            }
+          )
+
+          setCaptchaReady(true)
+
+          if (interval) {
+            clearInterval(interval)
+          }
+        } catch (error) {
+          console.error('Failed to render reCAPTCHA:', error)
+        }
+      }
+    }
+
+    renderCaptcha()
+
+    interval = setInterval(renderCaptcha, 100)
+
+    return () => {
+      if (interval) {
+        clearInterval(interval)
+      }
+    }
+  }, [])
+
+  // ============================================================
+  // RECAPTCHA SUCCESS
+  // ============================================================
+
+  const handleCaptchaSuccess = (token) => {
+    sendEmail(token)
+  }
+
+  // ============================================================
+  // RECAPTCHA EXPIRED
+  // ============================================================
+
+  const handleCaptchaExpired = () => {
+    setSending(false)
+    setError('Security verification expired. Please try again.')
+
+    if (
+      window.grecaptcha &&
+      captchaWidgetId.current !== null
+    ) {
+      window.grecaptcha.reset(captchaWidgetId.current)
+    }
+  }
+
+  // ============================================================
+  // RECAPTCHA ERROR
+  // ============================================================
+
+  const handleCaptchaError = () => {
+    setSending(false)
+    setError(
+      'Security verification failed. Please check your connection and try again.'
+    )
+
+    if (
+      window.grecaptcha &&
+      captchaWidgetId.current !== null
+    ) {
+      window.grecaptcha.reset(captchaWidgetId.current)
+    }
+  }
+
+  // ============================================================
+  // FORM FIELD CHANGES
+  // ============================================================
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     })
+
+    setError('')
   }
+
+  // ============================================================
+  // FORM SUBMISSION
+  // ============================================================
 
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    if (formData.name && formData.email && formData.message) {
-      emailjs
-        .send(
-          'service_m1mub2e',
-          'template_y4ug9ty',
-          {
-            from_name: formData.name,
-            from_email: formData.email,
-            message: formData.message,
-            to_email: 'info@wayrightsolutions.com'
-          }
-        )
-        .then(
-          () => {
-            setSubmitted(true)
-
-            setFormData({
-              name: '',
-              email: '',
-              message: ''
-            })
-
-            setError('')
-
-            setTimeout(() => {
-              setSubmitted(false)
-            }, 3000)
-          },
-          (error) => {
-            console.error('Failed to send email:', error)
-
-            setError('Failed to send message. Please try again.')
-
-            setTimeout(() => {
-              setError('')
-            }, 3000)
-          }
-        )
+    if (!formData.name || !formData.email || !formData.message) {
+      setError('Please complete all fields.')
+      return
     }
+
+    if (!captchaReady) {
+      setError('Security verification is still loading. Please try again.')
+      return
+    }
+
+    if (
+      !window.grecaptcha ||
+      captchaWidgetId.current === null
+    ) {
+      setError('Security verification is unavailable. Please try again.')
+      return
+    }
+
+    setSending(true)
+    setError('')
+
+    // Execute Invisible reCAPTCHA.
+    //
+    // Once Google completes the check, handleCaptchaSuccess()
+    // receives the token and sends the EmailJS request.
+    window.grecaptcha.execute(captchaWidgetId.current)
+  }
+
+  // ============================================================
+  // SEND EMAIL THROUGH EMAILJS
+  // ============================================================
+
+  const sendEmail = (captchaToken) => {
+    if (!captchaToken) {
+      setSending(false)
+      setError('Security verification failed. Please try again.')
+      return
+    }
+
+    emailjs
+      .send(
+        'service_m1mub2e',
+        'template_y4ug9ty',
+        {
+          from_name: formData.name,
+          from_email: formData.email,
+          message: formData.message,
+          to_email: 'info@wayrightsolutions.com',
+
+          // EmailJS uses this token to verify the reCAPTCHA.
+          'g-recaptcha-response': captchaToken
+        }
+      )
+      .then(
+        () => {
+          setSubmitted(true)
+          setSending(false)
+
+          setFormData({
+            name: '',
+            email: '',
+            message: ''
+          })
+
+          setError('')
+
+          // Reset reCAPTCHA so it can be used again.
+          if (
+            window.grecaptcha &&
+            captchaWidgetId.current !== null
+          ) {
+            window.grecaptcha.reset(captchaWidgetId.current)
+          }
+
+          setTimeout(() => {
+            setSubmitted(false)
+          }, 3000)
+        },
+        (error) => {
+          console.error('Failed to send email:', error)
+
+          setSending(false)
+          setError('Failed to send message. Please try again.')
+
+          if (
+            window.grecaptcha &&
+            captchaWidgetId.current !== null
+          ) {
+            window.grecaptcha.reset(captchaWidgetId.current)
+          }
+
+          setTimeout(() => {
+            setError('')
+          }, 3000)
+        }
+      )
   }
 
   return (
     <section id="contact" className="contact">
       <div className="container">
-        <h2 className="section-title">Get In Touch</h2>
+
+        <h2 className="section-title">
+          Get In Touch
+        </h2>
 
         <div className="contact-content">
 
           <div className="contact-info">
-          <h3>
-  <a href="mailto:info@wayrightsolutions.com?subject=Wayright Solutions Inquiry">
-    Contact Us
-  </a>
-</h3>
-
+            <h3>
+              <a href="mailto:info@wayrightsolutions.com?subject=Wayright Solutions Inquiry">
+                Contact Us
+              </a>
+            </h3>
 
             <p className="contact-description">
               Have questions about our services? Interested in a consultation?
@@ -89,7 +256,11 @@ function Contact() {
             </p>
           </div>
 
-          <form className="contact-form" onSubmit={handleSubmit}>
+          <form
+            className="contact-form"
+            onSubmit={handleSubmit}
+          >
+
             <div className="form-group">
               <input
                 type="text"
@@ -121,14 +292,20 @@ function Contact() {
                 onChange={handleChange}
                 required
               />
-
             </div>
 
-            <button type="submit" className="submit-button">
-              Send Message
-            </button>
-          </form>
+            {/* Invisible reCAPTCHA widget */}
+            <div ref={captchaRef}></div>
 
+            <button
+              type="submit"
+              className="submit-button"
+              disabled={sending}
+            >
+              {sending ? 'Verifying...' : 'Send Message'}
+            </button>
+
+          </form>
         </div>
 
         {submitted && (
