@@ -24,10 +24,6 @@ function WaitingList() {
   const captchaRef = useRef(null)
   const captchaWidgetId = useRef(null)
 
-  // ============================================================
-  // LOAD / RENDER INVISIBLE RECAPTCHA
-  // ============================================================
-
   useEffect(() => {
     let interval
 
@@ -71,17 +67,9 @@ function WaitingList() {
     }
   }, [])
 
-  // ============================================================
-  // RECAPTCHA SUCCESS
-  // ============================================================
-
   const handleCaptchaSuccess = (token) => {
     sendEmail(token)
   }
-
-  // ============================================================
-  // RECAPTCHA EXPIRED
-  // ============================================================
 
   const handleCaptchaExpired = () => {
     setSending(false)
@@ -94,10 +82,6 @@ function WaitingList() {
       window.grecaptcha.reset(captchaWidgetId.current)
     }
   }
-
-  // ============================================================
-  // RECAPTCHA ERROR
-  // ============================================================
 
   const handleCaptchaError = () => {
     setSending(false)
@@ -113,10 +97,6 @@ function WaitingList() {
     }
   }
 
-  // ============================================================
-  // FORM FIELD CHANGES
-  // ============================================================
-
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -125,10 +105,6 @@ function WaitingList() {
 
     setError('')
   }
-
-  // ============================================================
-  // FORM SUBMISSION
-  // ============================================================
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -157,10 +133,6 @@ function WaitingList() {
     window.grecaptcha.execute(captchaWidgetId.current)
   }
 
-  // ============================================================
-  // SEND EMAIL THROUGH EMAILJS
-  // ============================================================
-
   const sendEmail = (captchaToken) => {
     if (!captchaToken) {
       setSending(false)
@@ -176,7 +148,6 @@ function WaitingList() {
           from_name: formData.name,
           from_email: formData.email,
           to_email: 'info@wayrightsolutions.com',
-
           'g-recaptcha-response': captchaToken
         }
       )
@@ -263,7 +234,6 @@ function WaitingList() {
             />
           </div>
 
-          {/* Invisible reCAPTCHA widget */}
           <div ref={captchaRef}></div>
 
           <button
@@ -276,7 +246,11 @@ function WaitingList() {
 
           <p className="privacy-form-notice">
             We'll use your details to manage the waiting list and keep you updated.{' '}
-            <a href="#privacy">
+            <a
+              href="/privacy.html"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               See our Privacy Notice
             </a>{' '}
             for more information.

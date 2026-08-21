@@ -25,10 +25,6 @@ function Contact() {
   const captchaRef = useRef(null)
   const captchaWidgetId = useRef(null)
 
-  // ============================================================
-  // LOAD / RENDER INVISIBLE RECAPTCHA
-  // ============================================================
-
   useEffect(() => {
     let interval
 
@@ -72,17 +68,9 @@ function Contact() {
     }
   }, [])
 
-  // ============================================================
-  // RECAPTCHA SUCCESS
-  // ============================================================
-
   const handleCaptchaSuccess = (token) => {
     sendEmail(token)
   }
-
-  // ============================================================
-  // RECAPTCHA EXPIRED
-  // ============================================================
 
   const handleCaptchaExpired = () => {
     setSending(false)
@@ -95,10 +83,6 @@ function Contact() {
       window.grecaptcha.reset(captchaWidgetId.current)
     }
   }
-
-  // ============================================================
-  // RECAPTCHA ERROR
-  // ============================================================
 
   const handleCaptchaError = () => {
     setSending(false)
@@ -114,10 +98,6 @@ function Contact() {
     }
   }
 
-  // ============================================================
-  // FORM FIELD CHANGES
-  // ============================================================
-
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -126,10 +106,6 @@ function Contact() {
 
     setError('')
   }
-
-  // ============================================================
-  // FORM SUBMISSION
-  // ============================================================
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -158,10 +134,6 @@ function Contact() {
     window.grecaptcha.execute(captchaWidgetId.current)
   }
 
-  // ============================================================
-  // SEND EMAIL THROUGH EMAILJS
-  // ============================================================
-
   const sendEmail = (captchaToken) => {
     if (!captchaToken) {
       setSending(false)
@@ -178,7 +150,6 @@ function Contact() {
           from_email: formData.email,
           message: formData.message,
           to_email: 'info@wayrightsolutions.com',
-
           'g-recaptcha-response': captchaToken
         }
       )
@@ -237,6 +208,7 @@ function Contact() {
         <div className="contact-content">
 
           <div className="contact-info">
+
             <h3>
               <a href="mailto:info@wayrightsolutions.com?subject=Wayright Solutions Inquiry">
                 Contact Us
@@ -247,6 +219,7 @@ function Contact() {
               Have questions about our services? Interested in a consultation?
               Reach out to us directly or use the form below.
             </p>
+
           </div>
 
           <form
@@ -287,7 +260,6 @@ function Contact() {
               />
             </div>
 
-            {/* Invisible reCAPTCHA widget */}
             <div ref={captchaRef}></div>
 
             <button
@@ -300,13 +272,18 @@ function Contact() {
 
             <p className="privacy-form-notice">
               We'll use your details to respond to your enquiry.{' '}
-              <a href="#privacy">
+              <a
+                href="/privacy.html"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 See our Privacy Notice
               </a>{' '}
               for more information.
             </p>
 
           </form>
+
         </div>
 
         {submitted && (
